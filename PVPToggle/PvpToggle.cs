@@ -1,19 +1,14 @@
 ﻿using Rocket.Core.Plugins;
 using System;
 using System.Linq;
-using System.Text;
 using Rocket.API.Collections;
 using SDG.Unturned;
 using Steamworks;
 using UnityEngine;
 using Rocket.Unturned.Player;
 using Rocket.API;
-using Rocket.Core.Commands;
-using Rocket.Unturned.Chat;
 using System.Collections;
-using Rocket.Unturned.Events;
 using Rocket.Unturned;
-using System.Threading;
 
 namespace ExtraConcentratedJuice.PVPToggle
 {
@@ -26,10 +21,29 @@ namespace ExtraConcentratedJuice.PVPToggle
             instance = this;
             DamageTool.playerDamaged += OnDamage;
             U.Events.OnPlayerConnected += OnPlayerConnected;
+
+            if (Util.Config().enableIndicatorEffect && Util.Config().indicatorByDefault)
+            {
+                foreach (SteamPlayer x in Provider.clients)
+                    if (x != null)
+                    {
+                        bool pvp = (UnturnedPlayer.FromSteamPlayer(x)).GetComponent<PvpPlayer>().PvpEnabled;
+                        EffectManager.sendUIEffect(Util.Config().indicatorEffectId, 1201, x.playerID.steamID, true, pvp ? "PVP" : "PVE");
+                    }
+            }
         }
 
         protected override void Unload()
         {
+            StopAllCoroutines();
+
+            foreach(SteamPlayer x in Provider.clients)
+                if (x != null)
+                {
+                    EffectManager.askEffectClearByID(Util.Config().warningEffectId, x.playerID.steamID);
+                    EffectManager.askEffectClearByID(Util.Config().indicatorEffectId, x.playerID.steamID);
+                }
+
             DamageTool.playerDamaged -= OnDamage;
             U.Events.OnPlayerConnected -= OnPlayerConnected;
         }
@@ -49,6 +63,9 @@ namespace ExtraConcentratedJuice.PVPToggle
 
             UnturnedPlayer p = UnturnedPlayer.FromPlayer(player);
             UnturnedPlayer k = UnturnedPlayer.FromCSteamID(killer);
+
+            if (p.CSteamID == null || k.CSteamID == null)
+                return;
 
             if (p.CSteamID == killer)
                 return;
