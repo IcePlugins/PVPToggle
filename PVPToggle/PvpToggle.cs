@@ -58,13 +58,13 @@ namespace ExtraConcentratedJuice.PVPToggle
 
         private void OnDamage(Player player, ref EDeathCause cause, ref ELimb limb, ref CSteamID killer, ref Vector3 direction, ref float damage, ref float times, ref bool canDamage)
         {
-            if (player == null || killer == null)
+            if (player == null || killer == Provider.server)
                 return;
 
             UnturnedPlayer p = UnturnedPlayer.FromPlayer(player);
             UnturnedPlayer k = UnturnedPlayer.FromCSteamID(killer);
 
-            if (p.CSteamID == null || k.CSteamID == null)
+            if (p?.CSteamID == null || k?.CSteamID == null)
                 return;
 
             if (p.CSteamID == killer)
